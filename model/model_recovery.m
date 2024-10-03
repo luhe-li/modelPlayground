@@ -3,7 +3,7 @@ clear; close all; clc;
 %% knobs
 
 check_fake_data = false; % check the simulated data before fitting
-n_sample = 10; % number of ground-truth samples to generate
+n_sample = 2; % number of ground-truth samples to generate
 
 %% specify models
 
@@ -25,7 +25,7 @@ if ~exist(out_dir, 'dir'); mkdir(out_dir); end
 
 %% set up model
 
-model.n_run = 3; % number of fits for each model
+model.n_run = 2; % number of fits for each model
 model.n_trial = 50; % number of trial for each condition
 model.test_soa = -500:100:500; % x-axis where psychometric function is defined
 
@@ -43,7 +43,7 @@ for sim_m = 1:n_model
     % set up the ground truth
     % 1. If you already have the data and fit them, you can use the
     %    group-level best parameters as the mean/sd of the ground-truth samples
-    % 2. If you don't have the data yet, you can arbituarily set the 
+    % 2. If you don't have the data yet, you can arbituarily set the
     %    mean/sd of the ground-truth samples, though it can be suboptimal
 
     % sample 100 ground truth
@@ -79,13 +79,12 @@ if check_fake_data
 end
 
 %% fit by all models
-
 for sim_m = 1:n_model
 
     for i_sample = 1:n_sample
 
         for fit_m = 1:n_model
-            
+
             i_data = sim_data(sim_m, i_sample).data;
             fit_str = folders{fit_m};
             addpath(genpath(fullfile(pwd, fit_str)));
@@ -101,7 +100,7 @@ for sim_m = 1:n_model
 
             % fit the model multiple times with different initial values
             est_p = nan(model.n_run, val.num_param);
-            nll = nan(val.num_param);
+            nll = nan(1, val.num_param);
             for i  = 1:model.n_run
                 [est_p(i,:), nll(i)] = bads(llfun,...
                     val.init(i,:), val.lb, val.ub, val.plb, val.pub);
@@ -113,16 +112,36 @@ for sim_m = 1:n_model
             fits(sim_m, fit_m, i_sample).best_p = best_p;
             fits(sim_m, fit_m, i_sample).min_nll = min_nll;
 
-        end
+            %% model prediction using the best-fitting parameters
 
-        % find the best fitting model for this sampled dataset
-        [~, best_fit_m] = min([fits(sim_m, :, i_sample).min_nll]);
-        cm(sim_m, i_sample) = best_fit_m;
+            model.mode = 'predict';
+            pred(sim_m, fit_m, i_sample) = curr_model(best_p, model, []);
+
+        end
 
     end
 
 end
 
-% save full results
+%% determine the number of winning fits for each model
+winning_counts = zeros(n_model, n_model);
+for sim_m = 1:n_model
+    for i_sample = 1:n_sample
+        min_nll = inf;
+        best_fit_model = 0;
+        for fit_m = 1:n_model
+            if fits(sim_m, fit_m, i_sample).min_nll < min_nll
+                min_nll = fits(sim_m, fit_m, i_sample).min_nll;
+                best_fit_model = fit_m;
+            end
+        end
+        winning_counts(sim_m, best_fit_model) = winning_counts(sim_m, best_fit_model) + 1;
+    end
+end
+fits.winning_counts = winning_counts;
+fits.n_sample = n_sample;
+
+%% save full results
 fprintf('[%s] Model recovery done! Saving full results.\n', mfilename);
-save(fullfile(out_dir, flnm), 'sim_data','fits','cm');
+flnm = 'example_results';
+save(fullfile(out_dir, flnm), 'sim_data','fits','pred');
