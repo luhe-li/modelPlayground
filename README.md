@@ -1,5 +1,5 @@
 # Model Playground
-A flexible and effective framework for model fitting and model comparison. This structure can be handy when you are experimenting with multiple models.
+A flexible and effective framework for model fitting and model comparison. This structure might come in handy when you are experimenting with multiple models.
 
 ## Introduction
 This project provides examples of how to perform model recovery. To see an example, run `model_recovery.m`.
