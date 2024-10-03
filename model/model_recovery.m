@@ -3,7 +3,7 @@ clear; close all; clc;
 %% knobs
 
 check_fake_data = false; % check the simulated data before fitting
-n_sample = 2; % number of ground-truth samples to generate
+n_sample = 100; % number of ground-truth samples to generate
 
 %% specify models
 
@@ -25,7 +25,7 @@ if ~exist(out_dir, 'dir'); mkdir(out_dir); end
 
 %% set up model
 
-model.n_run = 2; % number of fits for each model
+model.n_run = 10; % number of fits for each model
 model.n_trial = 50; % number of trial for each condition
 model.test_soa = -500:100:500; % x-axis where psychometric function is defined
 
@@ -79,6 +79,7 @@ if check_fake_data
 end
 
 %% fit by all models
+
 for sim_m = 1:n_model
 
     for i_sample = 1:n_sample
@@ -123,7 +124,8 @@ for sim_m = 1:n_model
 
 end
 
-%% determine the number of winning fits for each model
+%% confusion matrix: determine the number of winning fits for each model
+
 winning_counts = zeros(n_model, n_model);
 for sim_m = 1:n_model
     for i_sample = 1:n_sample
@@ -138,10 +140,10 @@ for sim_m = 1:n_model
         winning_counts(sim_m, best_fit_model) = winning_counts(sim_m, best_fit_model) + 1;
     end
 end
-fits.winning_counts = winning_counts;
-fits.n_sample = n_sample;
+CM = winning_counts; 
 
 %% save full results
+
 fprintf('[%s] Model recovery done! Saving full results.\n', mfilename);
 flnm = 'example_results';
-save(fullfile(out_dir, flnm), 'sim_data','fits','pred');
+save(fullfile(out_dir, flnm), 'sim_data','fits','pred','CM');
