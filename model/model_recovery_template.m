@@ -108,7 +108,7 @@ for sim_m = 1:n_model
 
             % fit the model multiple times with different initial values
             est_p = nan(model.n_run, val.num_param);
-            nll = nan(1, val.num_param);
+            nll = nan(1, model.n_run);
             for i  = 1:model.n_run
                 [est_p(i,:), nll(i)] = bads(llfun,...
                     val.init(i,:), val.lb, val.ub, val.plb, val.pub);
@@ -152,4 +152,4 @@ fits.n_sample = n_sample;
 %% save full results
 fprintf('[%s] Model recovery done! Saving full results.\n', mfilename);
 flnm = 'example_results';
-save(fullfile(out_dir, flnm), 'sim_data','fits','pred');
+save(fullfile(out_dir, flnm), 'sim_data','model','fits','pred');
